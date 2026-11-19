@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>P14357 拼数 · 题意讲解</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "HF Sans"; src: url("fonts/sans-400.woff2") format("woff2"); font-weight: 400; font-display: block; }
+      @font-face { font-family: "HF Sans"; src: url("fonts/sans-600.woff2") format("woff2"); font-weight: 600; font-display: block; }
+      @font-face { font-family: "HF Sans"; src: url("fonts/sans-800.woff2") format("woff2"); font-weight: 800; font-display: block; }
+      :root {
+        --bg: #070b14;
+        --panel: #0d1524;
+        --panel2: #111c30;
+        --line: rgba(120, 170, 255, 0.18);
+        --line-soft: rgba(120, 170, 255, 0.07);
+        --text: #e6eefc;
+        --muted: #8fa3c0;
+        --cyan: #22d3ee;
+        --blue: #38bdf8;
+        --amber: #fbbf24;
+        --green: #4ade80;
+        --red: #f87171;
+        --sans: "Inter", "HF Sans", sans-serif;
+        --mono: "JetBrains Mono", monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      .stage {
+        position: relative; width: 1920px; height: 1080px; overflow: hidden;
+        background: radial-gradient(1200px 700px at 78% -10%, #122036 0%, var(--bg) 58%);
+        color: var(--text); font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      .grid {
+        position: absolute; inset: 0; opacity: 0.55;
+        background-image: linear-gradient(var(--line-soft) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+        background-size: 120px 120px; background-position: 120px 120px;
+      }
+      .hud {
+        position: absolute; z-index: 40; font-family: var(--mono); font-size: 28px;
+        letter-spacing: 0.14em; color: var(--muted);
+      }
+      .hud.tl { left: 120px; top: 44px; }
+      .hud.tr { right: 120px; top: 44px; text-align: right; }
+      .hud.bl { left: 120px; bottom: 34px; }
+      .hud.br { right: 120px; bottom: 34px; text-align: right; }
+      .progress {
+        position: absolute; left: 0; bottom: 0; width: 1920px; height: 5px;
+        background: rgba(255, 255, 255, 0.08); z-index: 41;
+      }
+      .progress-fill { width: 100%; height: 100%; background: var(--cyan); transform-origin: left center; transform: scaleX(0); }
+      .scene { position: absolute; inset: 0; z-index: 10; }
+      .wipe { position: absolute; inset: 0; background: var(--cyan); transform-origin: left center; z-index: 30; }
+      .kicker {
+        position: absolute; left: 120px; font-family: var(--mono);
+        font-size: 28px; letter-spacing: 0.14em; color: var(--cyan);
+      }
+      .display { font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+      .cap {
+        position: absolute; left: 120px; width: 1680px; bottom: 96px;
+        font-size: 40px; line-height: 1.45; font-weight: 600; color: var(--text);
+      }
+      .cap .hl { color: var(--amber); }
+      .cap .dim { color: var(--muted); }
+      .chip {
+        display: inline-block; font-size: 28px; color: var(--muted);
+        border: 1px solid var(--line); border-radius: 999px; padding: 10px 22px;
+      }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+
+      /* S1 */
+      .s1-k { top: 250px; }
+      .s1-title { position: absolute; left: 112px; top: 310px; font-size: 236px; }
+      .s1-sub { position: absolute; left: 122px; top: 604px; font-size: 40px; color: var(--muted); }
+      .s1-chips { position: absolute; left: 122px; top: 700px; display: flex; gap: 14px; }
+      .s1-ghost {
+        position: absolute; right: 100px; top: 430px; font-family: var(--mono);
+        font-size: 96px; line-height: 1.4; letter-spacing: 0.08em; text-align: right;
+        color: #555e6e;
+      }
+      .s1-ghost b { color: #2b6572; font-weight: 400; }
+
+      /* S2 */
+      .s2-k { top: 190px; }
+      .s2-h { position: absolute; left: 120px; top: 246px; font-size: 80px; }
+      .string {
+        position: absolute; left: 120px; top: 400px; width: 1050px; height: 150px;
+        border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+        display: flex; align-items: center; gap: 10px; padding: 0 34px;
+        font-family: var(--mono); font-size: 66px;
+      }
+      .string .d { color: var(--cyan); }
+      .string .l { color: #5e6d85; }
+      .conds { position: absolute; right: 120px; top: 380px; width: 620px; display: flex; flex-direction: column; gap: 16px; }
+      .cond {
+        display: flex; align-items: center; gap: 16px; height: 92px; padding: 0 26px;
+        border-radius: 14px; background: var(--panel); border: 1px solid var(--line);
+        font-size: 30px;
+      }
+      .cond b { font-family: var(--mono); font-size: 28px; color: var(--cyan); }
+      .s2-note { position: absolute; left: 122px; top: 590px; font-size: 32px; color: var(--muted); }
+
+      /* S3 */
+      .s3-k { top: 170px; }
+      .s3-h { position: absolute; left: 120px; top: 226px; font-size: 78px; }
+      .picker { position: absolute; left: 120px; top: 370px; width: 1680px; height: 400px; }
+      .src {
+        position: absolute; left: 0; top: 40px; font-family: var(--mono);
+        font-size: 72px; letter-spacing: 0.06em;
+      }
+      .src .d { color: var(--cyan); }
+      .src .l { color: #5e6d85; }
+      .tiles { position: absolute; left: 0; top: 150px; display: flex; gap: 18px; }
+      .tile {
+        width: 132px; height: 132px; border-radius: 18px; display: flex; align-items: center;
+        justify-content: center; font-family: var(--mono); font-size: 72px; font-weight: 700;
+        background: var(--panel2); border: 2px solid var(--line); color: var(--text);
+      }
+      .tile.on { background: rgba(34, 211, 238, 0.12); border-color: var(--cyan); color: var(--cyan); }
+      .tile.off { opacity: 0.35; }
+      .arrow-right { position: absolute; left: 720px; top: 190px; font-size: 56px; color: var(--cyan); }
+      .result {
+        position: absolute; left: 860px; top: 120px; width: 700px; height: 240px;
+        border-radius: 20px; background: var(--panel); border: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: center; gap: 18px;
+        font-family: var(--mono); font-size: 96px; font-weight: 700; color: var(--amber);
+      }
+      .s3-note { position: absolute; left: 122px; top: 800px; font-size: 32px; color: var(--muted); }
+
+      /* S4 */
+      .s4-k { top: 170px; }
+      .s4-h { position: absolute; left: 120px; top: 226px; font-size: 78px; }
+      .rule-string { position: absolute; left: 120px; top: 380px; font-family: var(--mono); font-size: 84px; letter-spacing: 0.08em; }
+      .rule-string .one { color: var(--amber); }
+      .rule-string .zero { color: var(--cyan); }
+      .rule-string .l { color: #5e6d85; }
+      .rule-note { position: absolute; left: 122px; top: 530px; font-size: 34px; color: var(--muted); }
+      .used { position: absolute; left: 120px; top: 630px; display: flex; gap: 20px; }
+      .used .u {
+        width: 110px; height: 110px; border-radius: 16px; border: 2px solid var(--amber);
+        display: flex; align-items: center; justify-content: center; font-family: var(--mono);
+        font-size: 60px; color: var(--amber); background: rgba(251, 191, 36, 0.08);
+      }
+      .s4-side { position: absolute; right: 120px; top: 370px; width: 700px; display: flex; flex-direction: column; gap: 18px; }
+      .crow {
+        height: 120px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+        display: flex; align-items: center; gap: 26px; padding: 0 34px;
+      }
+      .crow .ch { font-family: var(--mono); font-size: 58px; width: 190px; }
+      .crow .n { font-size: 40px; font-weight: 800; }
+      .crow .why { margin-left: auto; font-size: 28px; color: var(--muted); }
+      .crow .ch.one { color: var(--amber); }
+      .crow .ch.zero { color: var(--cyan); }
+      .crow .ch.letters { color: #5e6d85; }
+
+      /* S5 */
+      .s5-k { top: 160px; }
+      .s5-h { position: absolute; left: 120px; top: 216px; font-size: 76px; }
+      .s5-string { position: absolute; left: 120px; top: 330px; font-family: var(--mono); font-size: 72px; letter-spacing: 0.1em; }
+      .s5-string .one { color: var(--amber); }
+      .s5-string .zero { color: var(--cyan); }
+      .s5-string .l { color: #5e6d85; }
+      .trys { position: absolute; left: 120px; top: 470px; width: 1680px; display: flex; flex-direction: column; gap: 20px; }
+      .try {
+        height: 104px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel);
+        display: flex; align-items: center; gap: 28px; padding: 0 30px; font-family: var(--mono); font-size: 52px;
+      }
+      .try .mark { font-family: var(--sans); font-size: 30px; font-weight: 800; padding: 6px 18px; border-radius: 8px; }
+      .try.ok .mark { color: var(--green); background: rgba(74, 222, 128, 0.12); }
+      .try.bad { opacity: 0.7; }
+      .try.bad .mark { color: var(--red); background: rgba(248, 113, 113, 0.12); }
+      .try .why { margin-left: auto; font-family: var(--sans); font-size: 28px; color: var(--muted); }
+
+      /* S6 */
+      .s6-k { top: 170px; }
+      .s6-h { position: absolute; left: 120px; top: 226px; font-size: 78px; }
+      .s6-sub { position: absolute; left: 122px; top: 340px; font-size: 34px; color: var(--muted); }
+      .numbers { position: absolute; left: 120px; top: 440px; width: 1680px; display: flex; gap: 26px; align-items: flex-end; }
+      .num {
+        flex: 1; height: 220px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: center; font-family: var(--mono);
+        font-size: 62px; color: #7e8ca3;
+      }
+      .num.best { height: 300px; border-color: var(--amber); background: rgba(251, 191, 36, 0.08); color: var(--amber); font-size: 84px; }
+      .crown { position: absolute; left: 50%; top: -66px; transform: translateX(-50%); font-size: 54px; }
+
+      /* S7 */
+      .s7-k { top: 170px; }
+      .s7-h { position: absolute; left: 120px; top: 226px; font-size: 78px; }
+      .io { position: absolute; left: 120px; top: 380px; width: 1680px; display: flex; gap: 40px; }
+      .io-card { flex: 1; height: 340px; border-radius: 20px; background: var(--panel); border: 1px solid var(--line); padding: 40px 44px; }
+      .io-card .k { font-family: var(--mono); font-size: 28px; letter-spacing: 0.14em; color: var(--cyan); }
+      .io-card .t { margin-top: 18px; font-size: 46px; font-weight: 700; }
+      .io-card .d { margin-top: 16px; font-size: 30px; color: var(--muted); }
+      .limit { position: absolute; left: 122px; top: 790px; display: flex; gap: 14px; align-items: center; }
+      .limit .big { font-family: var(--mono); font-size: 40px; color: var(--amber); }
+
+      /* S8 */
+      .s8-k { top: 160px; }
+      .s8-h { position: absolute; left: 120px; top: 216px; font-size: 76px; }
+      .samples { position: absolute; left: 120px; top: 360px; width: 1680px; display: flex; flex-direction: column; gap: 26px; }
+      .sample-row {
+        height: 160px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+        display: flex; align-items: center; gap: 34px; padding: 0 40px; font-family: var(--mono); font-size: 56px;
+      }
+      .sample-row .label { font-family: var(--sans); font-size: 28px; color: var(--muted); width: 110px; }
+      .sample-row .in { color: var(--cyan); }
+      .sample-row .out { color: var(--amber); }
+      .sample-row .arrow { color: var(--muted); }
+
+      /* S9 */
+      .s9-k { top: 210px; }
+      .s9-q { position: absolute; left: 120px; font-size: 86px; font-weight: 800; letter-spacing: -0.02em; }
+      .s9-q.a { top: 310px; }
+      .s9-q.b { top: 450px; }
+      .s9-q span { color: var(--amber); }
+      .s9-foot { position: absolute; left: 122px; top: 640px; font-size: 34px; color: var(--muted); }
+      .s9-mark { position: absolute; right: 120px; bottom: 130px; text-align: right; font-family: var(--mono); font-size: 28px; color: var(--muted); line-height: 1.9; }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="hud tl">P14357 · 拼数</div>
+      <div class="hud tr">CSP-J 2025 · T1</div>
+      <div class="hud bl">题意讲解</div>
+      <div class="hud br">60 SEC</div>
+
+      <!-- S1 0–5.3 -->
+      <section class="scene clip" id="s1" data-start="0" data-duration="5.3" data-track-index="0">
+        <div class="wipe" id="w1"></div>
+        <div class="kicker s1-k" id="k1">CSP-J 2025 入门级 T1 · 洛谷 P14357</div>
+        <h1 class="display s1-title" id="title1">拼数</h1>
+        <div class="s1-sub" id="sub1">字符串处理 · 正整数 · 入门</div>
+        <div class="s1-chips" id="chips1">
+          <span class="chip">只讲题意</span><span class="chip">不讲做法</span><span class="chip">60 秒</span>
+        </div>
+        <div class="s1-ghost" id="ghost1">2 9 0 <b>e s</b> 1 <b>q</b> 0</div>
+        <p class="cap" id="cap1">来看 <span class="hl">CSP-J 2025</span> 第一题，拼数。</p>
+      </section>
+
+      <!-- S2 5.3–12.1 -->
+      <section class="scene clip" id="s2" data-start="5.3" data-duration="6.8" data-track-index="0">
+        <div class="wipe" id="w2"></div>
+        <div class="kicker s2-k" id="k2">01 / 题目给了什么</div>
+        <h2 class="display s2-h" id="h2">一个字符串 s</h2>
+        <div class="string" id="str2">
+          <span class="d">2</span><span class="d">9</span><span class="d">0</span>
+          <span class="l">e</span><span class="l">s</span>
+          <span class="d">1</span><span class="l">q</span><span class="d">0</span>
+        </div>
+        <div class="s2-note" id="note2">示例：290es1q0</div>
+        <div class="conds" id="conds2">
+          <div class="cond"><b>01</b>只含小写字母和数字</div>
+          <div class="cond"><b>02</b>至少有一个 1 到 9</div>
+          <div class="cond"><b>03</b>长度最多 10⁶</div>
+        </div>
+        <p class="cap" id="cap2">题目给一个字符串 <span class="hl">s</span>，只有小写字母和数字，至少有一个 <span class="hl">1 到 9</span>。</p>
+      </section>
+
+      <!-- S3 12.1–18.05 -->
+      <section class="scene clip" id="s3" data-start="12.1" data-duration="5.95" data-track-index="0">
+        <div class="wipe" id="w3"></div>
+        <div class="kicker s3-k" id="k3">02 / 你能做什么</div>
+        <h2 class="display s3-h" id="h3">任选数字，任意顺序</h2>
+        <div class="picker" id="picker3">
+          <div class="src" id="src3"><span class="d">2</span> <span class="d">9</span> <span class="d">0</span> <span class="l">e</span> <span class="l">s</span> <span class="d">1</span> <span class="l">q</span> <span class="d">0</span></div>
+          <div class="tiles" id="tiles3">
+            <div class="tile on">2</div>
+            <div class="tile on">9</div>
+            <div class="tile off">e</div>
+            <div class="tile on">1</div>
+            <div class="tile off">q</div>
+            <div class="tile on">0</div>
+          </div>
+          <div class="arrow-right" id="arr3">→</div>
+          <div class="result" id="res3">9 2 1 0</div>
+        </div>
+        <div class="s3-note" id="note3">字母不能选；数字可以选任意多个。</div>
+        <p class="cap" id="cap3">你可以挑出<span class="hl">任意多个数字</span>，按<span class="hl">任意顺序</span>拼成一个正整数。</p>
+      </section>
+
+      <!-- S4 18.05–22.9 -->
+      <section class="scene clip" id="s4" data-start="18.05" data-duration="4.85" data-track-index="0">
+        <div class="wipe" id="w4"></div>
+        <div class="kicker s4-k" id="k4">03 / 关键限制</div>
+        <h2 class="display s4-h" id="h4">每个位置，只能用一次</h2>
+        <div class="rule-string" id="rs4"><span class="one">1</span><span class="l">a</span><span class="zero">0</span><span class="one">1</span><span class="l">b</span></div>
+        <div class="rule-note" id="rn4">同一个数字出现两次，才能用两次。</div>
+        <div class="used" id="used4">
+          <div class="u">1</div><div class="u">0</div><div class="u">1</div>
+        </div>
+        <div class="s4-side" id="side4">
+          <div class="crow"><span class="ch one">1</span><span class="n">× 2</span><span class="why">两个 1 都能用</span></div>
+          <div class="crow"><span class="ch zero">0</span><span class="n">× 1</span><span class="why">只有一个 0</span></div>
+          <div class="crow"><span class="ch letters">a / b</span><span class="n">× 0</span><span class="why">字母不能选</span></div>
+        </div>
+        <p class="cap" id="cap4">字母不能选，数字<span class="hl">每个位置只能用一次</span>。</p>
+      </section>
+
+      <!-- S5 22.9–31.8 -->
+      <section class="scene clip" id="s5" data-start="22.9" data-duration="8.9" data-track-index="0">
+        <div class="wipe" id="w5"></div>
+        <div class="kicker s5-k" id="k5">04 / 看个例子</div>
+        <h2 class="display s5-h" id="h5">s = 1a01b，能拼出什么？</h2>
+        <div class="s5-string" id="ss5"><span class="one">1</span><span class="l">a</span><span class="zero">0</span><span class="one">1</span><span class="l">b</span></div>
+        <div class="trys" id="trys5">
+          <div class="try ok" id="t1"><span class="mark">可以</span><span>101</span><span class="why">用两个 1，一个 0</span></div>
+          <div class="try ok" id="t2"><span class="mark">可以</span><span>110</span><span class="why">换个顺序</span></div>
+          <div class="try bad" id="t3"><span class="mark">不行</span><span>111</span><span class="why">字符串里只有两个 1</span></div>
+        </div>
+        <p class="cap" id="cap5">比如 s 是 <span class="hl">1a01b</span>，可以拼出 101 或 110，但不能拼 111，因为只有两个 1。</p>
+      </section>
+
+      <!-- S6 31.8–37.5 -->
+      <section class="scene clip" id="s6" data-start="31.8" data-duration="5.7" data-track-index="0">
+        <div class="wipe" id="w6"></div>
+        <div class="kicker s6-k" id="k6">05 / 题目要求</div>
+        <h2 class="display s6-h" id="h6">所有拼法里，取最大的</h2>
+        <div class="s6-sub" id="sub6">输出一个正整数，不是拼法数量。</div>
+        <div class="numbers" id="nums6">
+          <div class="num">101</div>
+          <div class="num">100</div>
+          <div class="num best"><span class="crown">♛</span>110</div>
+          <div class="num">11</div>
+          <div class="num">10</div>
+        </div>
+        <p class="cap" id="cap6">要求的是：所有能拼出的正整数里，<span class="hl">最大的那个</span>。</p>
+      </section>
+
+      <!-- S7 37.5–43.85 -->
+      <section class="scene clip" id="s7" data-start="37.5" data-duration="6.35" data-track-index="0">
+        <div class="wipe" id="w7"></div>
+        <div class="kicker s7-k" id="k7">06 / 输入输出</div>
+        <h2 class="display s7-h" id="h7">读一行，写一行</h2>
+        <div class="io" id="io7">
+          <div class="io-card">
+            <div class="k">INPUT</div>
+            <div class="t">一行字符串 s</div>
+            <div class="d">只含小写字母和数字</div>
+          </div>
+          <div class="io-card">
+            <div class="k">OUTPUT</div>
+            <div class="t">一个正整数</div>
+            <div class="d">能拼出的最大值</div>
+          </div>
+        </div>
+        <div class="limit" id="limit7">
+          <span class="chip">数据范围</span>
+          <span class="big">1 ≤ |s| ≤ 10⁶</span>
+        </div>
+        <p class="cap" id="cap7">输入一行 s，输出这个最大正整数，s 最长<span class="hl">一百万位</span>。</p>
+      </section>
+
+      <!-- S8 43.85–50.4 -->
+      <section class="scene clip" id="s8" data-start="43.85" data-duration="6.55" data-track-index="0">
+        <div class="wipe" id="w8"></div>
+        <div class="kicker s8-k" id="k8">07 / 样例</div>
+        <h2 class="display s8-h" id="h8">先对着样例读一遍</h2>
+        <div class="samples" id="samples8">
+          <div class="sample-row"><span class="label">样例 1</span><span class="in">5</span><span class="arrow">→</span><span class="out">5</span></div>
+          <div class="sample-row"><span class="label">样例 2</span><span class="in">290es1q0</span><span class="arrow">→</span><span class="out">92100</span></div>
+        </div>
+        <p class="cap" id="cap8">两组样例：<span class="hl">5 得 5</span>；<span class="hl">290es1q0 得 92100</span>。</p>
+      </section>
+
+      <!-- S9 50.4–60 -->
+      <section class="scene clip" id="s9" data-start="50.4" data-duration="9.6" data-track-index="0">
+        <div class="wipe" id="w9"></div>
+        <div class="kicker s9-k" id="k9">08 / 先想清楚</div>
+        <div class="s9-q a" id="q9a">哪些数字能选？</div>
+        <div class="s9-q b" id="q9b">每个数字<span>能选几次</span>？</div>
+        <div class="s9-foot" id="foot9">先读题意，再想做法。视频不给答案。</div>
+        <div class="s9-mark" id="mark9">洛谷 P14357<br />CSP-J 2025 T1</div>
+        <p class="cap" id="cap9">题意就这些。先想清楚：<span class="hl">哪些数字能选，每个能选几次</span>。</p>
+      </section>
+
+      <div class="progress"><div class="progress-fill" id="prog"></div></div>
+      <audio id="mix" class="clip" src="audio/mix.wav" data-start="0" data-duration="60" data-volume="1" data-track-index="9"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      /* S1 */
+      tl.fromTo("#w1", { scaleX: 1 }, { scaleX: 0, duration: 0.5, ease: "power4.inOut" }, 0);
+      tl.fromTo("#k1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 0.35);
+      tl.fromTo("#title1", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.18);
+      tl.fromTo("#sub1", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 0.55);
+      tl.fromTo("#chips1 .chip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 }, 0.9);
+      tl.fromTo("#ghost1", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.9, ease: "power3.out" }, 0.5);
+      tl.fromTo("#cap1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 0.6);
+      tl.to("#s1", { scale: 1.01, duration: 5.2, ease: "none" }, 0.1);
+
+      /* S2 */
+      tl.fromTo("#w2", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 5.3);
+      tl.fromTo("#k2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 5.45);
+      tl.fromTo("#h2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.55);
+      tl.fromTo("#str2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 5.65);
+      tl.fromTo("#str2 > span", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.06 }, 5.8);
+      tl.fromTo("#note2", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 6.2);
+      tl.fromTo("#conds2 .cond", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.14 }, 6.0);
+      tl.fromTo("#cap2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 5.4);
+
+      /* S3 */
+      tl.fromTo("#w3", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 12.1);
+      tl.fromTo("#k3", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 12.25);
+      tl.fromTo("#h3", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 12.35);
+      tl.fromTo("#src3", { opacity: 0 }, { opacity: 1, duration: 0.45 }, 12.45);
+      tl.fromTo("#tiles3 .tile", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 }, 12.7);
+      tl.fromTo("#arr3", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35 }, 13.4);
+      tl.fromTo("#res3", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.4)" }, 13.55);
+      tl.fromTo("#note3", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 13.9);
+      tl.fromTo("#cap3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 12.2);
+
+      /* S4 */
+      tl.fromTo("#w4", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 18.05);
+      tl.fromTo("#k4", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 18.2);
+      tl.fromTo("#h4", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 18.3);
+      tl.fromTo("#rs4", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 18.4);
+      tl.fromTo("#used4 .u", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.1 }, 18.7);
+      tl.fromTo("#rn4", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 19.0);
+      tl.fromTo("#side4 .crow", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.18 }, 19.2);
+      tl.fromTo("#cap4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 18.15);
+
+      /* S5 */
+      tl.fromTo("#w5", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 22.9);
+      tl.fromTo("#k5", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 23.05);
+      tl.fromTo("#h5", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 23.15);
+      tl.fromTo("#ss5", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 23.3);
+      tl.fromTo("#trys5 .try", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.25 }, 23.6);
+      tl.fromTo("#cap5", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 23.0);
+
+      /* S6 */
+      tl.fromTo("#w6", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 31.8);
+      tl.fromTo("#k6", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 31.95);
+      tl.fromTo("#h6", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 32.05);
+      tl.fromTo("#sub6", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 32.35);
+      tl.fromTo("#nums6 .num", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 }, 32.3);
+      tl.fromTo(".crown", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, 32.8);
+      tl.fromTo("#cap6", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 32.0);
+
+      /* S7 */
+      tl.fromTo("#w7", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 37.5);
+      tl.fromTo("#k7", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 37.65);
+      tl.fromTo("#h7", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 37.75);
+      tl.fromTo("#io7 .io-card", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.16 }, 37.9);
+      tl.fromTo("#limit7", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 38.5);
+      tl.fromTo("#cap7", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 37.65);
+
+      /* S8 */
+      tl.fromTo("#w8", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 43.85);
+      tl.fromTo("#k8", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 44.0);
+      tl.fromTo("#h8", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 44.1);
+      tl.fromTo("#samples8 .sample-row", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.2 }, 44.25);
+      tl.fromTo("#cap8", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 44.0);
+
+      /* S9 */
+      tl.fromTo("#w9", { scaleX: 1 }, { scaleX: 0, duration: 0.45, ease: "power4.inOut" }, 50.4);
+      tl.fromTo("#k9", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 50.55);
+      tl.fromTo("#q9a", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 50.7);
+      tl.fromTo("#q9b", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 50.9);
+      tl.fromTo("#foot9", { opacity: 0 }, { opacity: 1, duration: 0.45 }, 51.4);
+      tl.fromTo("#mark9", { opacity: 0 }, { opacity: 1, duration: 0.45 }, 51.6);
+      tl.fromTo("#cap9", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, 50.55);
+      tl.to("#s9", { scale: 1.01, duration: 9.3, ease: "none" }, 50.6);
+
+      tl.fromTo("#prog", { scaleX: 0 }, { scaleX: 1, duration: 60, ease: "none" }, 0);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
