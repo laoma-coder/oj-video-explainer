@@ -1,0 +1,25 @@
+name: Bug report
+description: 渲染失败、门禁误报、文档错误
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 尽量给出完整报错
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      description: OS、Node、Python、HyperFrames 版本
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 命令 + 最小工程
+    validations:
+      required: true

@@ -1,0 +1,32 @@
+name: Problem request
+description: 想要某道题的题意 / 答案讲解
+labels: [problem-request]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: 平台与题号
+      placeholder: 洛谷 P14357 / CSP-J 2025 T1
+    validations:
+      required: true
+  - type: textarea
+    id: statement
+    attributes:
+      label: 题目摘要
+      description: 用自己的话概括，不要直接贴完整题面
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 需要哪种
+      options:
+        - 只要题意讲解
+        - 只要答案讲解
+        - 两条都要
+    validations:
+      required: true
+  - type: input
+    id: code
+    attributes:
+      label: 参考答案链接（可选）
